@@ -1,33 +1,53 @@
 import React, { useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 const ResumeDisplayPage = ({ formData }) => {
-  const navigate = useNavigate();
   const resumeRef = useRef();
 
   const handlePrint = () => {
-    const printContents = resumeRef.current.innerHTML;
-    const originalContents = document.body.innerHTML;
+    const printContent = resumeRef.current.innerHTML;
+    const printWindow = window.open('', '', 'width=900,height=650');
 
-    document.body.innerHTML = printContents;
-    window.print();
-    document.body.innerHTML = originalContents;
-    window.location.reload(); // To restore event listeners
+    printWindow.document.write(`
+      <html>
+        <head>
+          <style>
+            @media print {
+              body * {
+                visibility: hidden;
+              }
+              #resume-print-content, #resume-print-content * {
+                visibility: visible;
+              }
+              #resume-print-content {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+              }
+              img {
+                max-width: 100px; /* Adjust the size as needed */
+                max-height: 100px; /* Adjust the size as needed */
+              }
+              .print-hide {
+                display: none;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div id="resume-print-content">${printContent}</div>
+        </body>
+      </html>
+    `);
+
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
   };
 
-  // Check if formData is present
   if (!formData || Object.keys(formData).length === 0) {
-    return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <p className="text-lg font-semibold">No resume data found. Please go back and submit the form.</p>
-        <button
-          className="bg-blue-500 text-white px-4 py-2 rounded"
-          onClick={() => navigate('/resume')}
-        >
-          Go to Resume Form
-        </button>
-      </div>
-    );
+    return <div>Loading...</div>;
   }
 
   return (
@@ -44,89 +64,101 @@ const ResumeDisplayPage = ({ formData }) => {
 
       <section id="resume-sc" className="py-8">
         <div className="container mx-auto px-4">
-          <div className="bg-white shadow rounded-lg p-6" ref={resumeRef}>
+          <div ref={resumeRef} className="bg-white shadow rounded-lg p-6">
             <div className="text-center mb-6">
               <img
                 src={formData.image}
-                alt="User"
-                className="w-32 h-32 rounded-full mx-auto"
+                alt="Profile"
+                className="mx-auto rounded-full h-24 w-24"
               />
-              <h2 className="text-2xl font-semibold mt-4">
+              <h2 className="text-2xl font-bold mt-4">
                 {formData.firstname} {formData.middlename} {formData.lastname}
               </h2>
-              <p className="text-gray-600">{formData.designation}</p>
+              <p className="text-lg">{formData.designation}</p>
+              <p>{formData.address}</p>
+              <p>{formData.email}</p>
+              <p>{formData.phoneno}</p>
             </div>
-
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold mb-4">Contact Information</h3>
-              <p><strong>Address:</strong> {formData.address}</p>
-              <p><strong>Email:</strong> {formData.email}</p>
-              <p><strong>Phone No:</strong> {formData.phoneno}</p>
-            </div>
-
             <div className="mb-6">
               <h3 className="text-lg font-semibold mb-4">Summary</h3>
               <p>{formData.summary}</p>
             </div>
 
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold mb-4">Achievements</h3>
-              {formData.achievements.map((achieve, index) => (
-                <div key={index} className="mb-4">
-                  <h4 className="font-semibold">{achieve.title}</h4>
-                  <p>{achieve.description}</p>
-                </div>
-              ))}
-            </div>
+            {/* Achievements */}
+            {formData.achievements && formData.achievements.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-4">Achievements</h3>
+                <ul className="list-disc list-inside">
+                  {formData.achievements.map((achievement, index) => (
+                    <li key={index}>
+                      <strong>{achievement.title}:</strong> {achievement.description}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold mb-4">Experience</h3>
-              {formData.experiences.map((experience, index) => (
-                <div key={index} className="mb-4">
-                  <h4 className="font-semibold">{experience.title}</h4>
-                  <p>{experience.description}</p>
-                  <p><strong>Duration:</strong> {experience.duration}</p>
-                </div>
-              ))}
-            </div>
+            {/* Experience */}
+            {formData.experiences && formData.experiences.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-4">Experience</h3>
+                <ul className="list-disc list-inside">
+                  {formData.experiences.map((experience, index) => (
+                    <li key={index}>
+                      <strong>{experience.title}</strong> at {experience.description} ({experience.duration})
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold mb-4">Education</h3>
-              {formData.educations.map((education, index) => (
-                <div key={index} className="mb-4">
-                  <h4 className="font-semibold">{education.title}</h4>
-                  <p>{education.description}</p>
-                  <p><strong>Year:</strong> {education.year}</p>
-                </div>
-              ))}
-            </div>
+            {/* Education */}
+            {formData.educations && formData.educations.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-4">Education</h3>
+                <ul className="list-disc list-inside">
+                  {formData.educations.map((education, index) => (
+                    <li key={index}>
+                      <strong>{education.title}</strong> from {education.description} ({education.year})
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold mb-4">Projects</h3>
-              {formData.projects.map((project, index) => (
-                <div key={index} className="mb-4">
-                  <h4 className="font-semibold">{project.title}</h4>
-                  <p>{project.description}</p>
-                </div>
-              ))}
-            </div>
+            {/* Projects */}
+            {formData.projects && formData.projects.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-4">Projects</h3>
+                <ul className="list-disc list-inside">
+                  {formData.projects.map((project, index) => (
+                    <li key={index}>
+                      <strong>{project.title}:</strong> {project.description}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold mb-4">Skills</h3>
-              {formData.skills.map((skill, index) => (
-                <div key={index} className="mb-4">
-                  <h4 className="font-semibold">{skill.title}</h4>
-                </div>
-              ))}
-            </div>
+            {/* Skills */}
+            {formData.skills && formData.skills.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-4">Skills</h3>
+                <ul className="list-disc list-inside">
+                  {formData.skills.map((skill, index) => (
+                    <li key={index}>{skill.title}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
-          <div className='text-center'>
-          <button
-            className="mt-4 bg-blue-500 text-white px-4 py-2 rounded"
-            onClick={handlePrint}
-          >
-            Print Resume
-          </button>
+          <div className="text-center mt-4">
+            <button 
+              onClick={handlePrint} 
+              className="bg-blue-500 text-white px-4 py-2 rounded"
+            >
+              Print Resume
+            </button>
           </div>
         </div>
       </section>
